@@ -2,6 +2,7 @@
 'use strict';
 const https = require('https');
 const fetch = require("node-fetch");
+const csv=require('csvtojson')
 const {dialogflow} = require('actions-on-google');
 const functions = require('firebase-functions');
 const app = dialogflow({debug: true});
@@ -67,6 +68,30 @@ app.intent('NewCases', conv => {
 
 app.intent('RecoveredCases', conv => {
     return conv.ask("There are "+ cases.recuperados +" patients recovered in Portugal.");
+});
+
+app.intent('LocalCases', (conv, {local}) => {
+    return new Promise( (resolve, reject) => {
+        fetch('https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv')
+            .then(response => response.text())
+            .then(data => {
+                return resolve(data);
+            })
+            .catch(error => {
+                console.log(error);
+                return reject(error)
+            });
+    }).then( (data) => {
+        return csv().fromString(data)
+            .then((json)=>{
+                let nrCases = json[json.length-1][local === "Lisbon" ? "LISBOA" : local.toUpperCase()]
+                if(nrCases === undefined){
+                    return conv.ask("That Local doesn't exist or it was misspelled. Can you repeat please?")
+                }
+                return conv.ask("There are "+Math.floor(nrCases)+" cases in "+local)
+            })
+    })
+    //return conv.ask("You said "+ local);
 });
 /*
 app.intent('CasesLocation', (conv)=>{
