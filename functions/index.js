@@ -6,32 +6,34 @@ const csv=require('csvtojson')
 const {dialogflow} = require('actions-on-google');
 const functions = require('firebase-functions');
 const app = dialogflow({debug: true});
+const admin = require('firebase-admin');
 
 app.catch((conv, e) => {
     console.log("ERROR "+e);
-    conv.close("Oops. Something went wrong.");
+    conv.close("Oops. Sorry, something went wrong.");
 });
 
 var cases;
-/*
-var requestCases = new Promise((resolve, reject) =>{
-    https.get('https://covid19-api.vost.pt/Requests/get_last_update', (resp) => {
-        let data = '';
-        // A chunk of data has been recieved.
-        resp.on('data', (chunk) => {
-            data += chunk;
-        });
+var locals;
+admin.initializeApp();
+const db = admin.firestore();
 
-        // The whole response has been received. Print out the result.
-        resp.on('end', () => {
-            resolve(JSON.parse(data));
+var requestLocals =  new Promise( (resolve, reject) => {
+    fetch('https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv')
+        .then(response => response.text())
+        .then(data => {
+            return csv().fromString(data)
+                .then((json)=>{
+                    json = json[json.length-1]
+                    console.log("JSON"+json)
+                    return resolve(json)
+                })
+        })
+        .catch(error => {
+            return reject(error)
         });
+})
 
-    }).on("error", (err) => {
-        reject(err.message);
-    });
-});*/
-/*
 var requestCases = new Promise( (resolve, reject) => {
     fetch('https://covid19-api.vost.pt/Requests/get_last_update')
         .then(response => response.json())
@@ -42,17 +44,82 @@ var requestCases = new Promise( (resolve, reject) => {
             console.log(error);
             return reject(error)
         });
-});*/
+});
+
+function synchronizeFrom(data){
+    let correctData = data.split('-')
+
+    var lastSyncDate = new Date(correctData[2], correctData[1]-1, correctData[0], 15);
+
+    var nextSyncDate = new Date(lastSyncDate)
+    nextSyncDate.setDate(nextSyncDate.getDate() + 1)
+
+    var currentDate = new Date()
+
+    if(currentDate >= nextSyncDate){
+        return "API"
+    }else{
+        return "DB"
+    }
+
+}
+
+function getFromAPI(){
+    return requestCases.then( res => {
+        //cases = res
+        return db.collection('Covid-Portugal')
+            .doc("Cases")
+            .set(res)
+            .then(() => {
+                return requestLocals.then( locals => {
+                    return db.collection("Covid-Portugal")
+                        .doc("Locals")
+                        .set(locals)
+                        .then(()=>{
+                            return ({data:{cases: res, locals: locals}})
+                        })
+                })
+            })
+            .catch(error => {
+                return ('Error writing document: ' + error)
+            });
+    })
+}
+
+var getFromDB = new Promise ((resolve, reject) =>{
+    let docRef = db.collection('Covid-Portugal').doc('Cases');
+    docRef.get()
+        .then(casesDoc => {
+            if(synchronizeFrom(casesDoc.data().data) === "DB"){
+                return db.collection('Covid-Portugal').doc('Locals').get()
+                    .then(localsDoc => {
+                        return resolve({data:{cases: casesDoc.data(), locals: localsDoc.data()}})
+                    })
+            }else{
+                return resolve(getFromAPI())
+            }
+            //cases=doc.data()
+            //return(doc.data())
+        })
+        .catch(err => {
+            return reject(err);
+        });
+});
+
 
 app.intent('Default Welcome Intent', (conv) => {
-    cases = dummy
-    return conv.ask("Welcome, i can inform you about the current COVID 19 situation in Portugal. What would you like to know?");
-    /*return requestCases.then( (res)=>{
-        cases = res;
+    //cases = dum
+    //return conv.ask("Welcome, i can inform you about the current COVID 19 situation in Portugal. What would you like to know?");
+
+    return getFromDB.then( (res)=>{
+        console.log("RES:"+res.data.cases)
+        cases = res.data.cases;
+        locals = res.data.locals
         return conv.ask("Welcome, i can inform you about the current COVID 19 situation in Portugal. What would you like to know?");
     }, (error) => {
-        conv.close("Error: " + error);
-    });*/
+        console.log("ERROR WELCOME INTENT:"+error)
+        conv.close("Sorry, an error occurred fetching the data.");
+    });
 });
 app.intent('DeathCases', conv => {
     return conv.ask("There are already "+cases.obitos+" fatalities in Portugal.");
@@ -71,27 +138,11 @@ app.intent('RecoveredCases', conv => {
 });
 
 app.intent('LocalCases', (conv, {local}) => {
-    return new Promise( (resolve, reject) => {
-        fetch('https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv')
-            .then(response => response.text())
-            .then(data => {
-                return resolve(data);
-            })
-            .catch(error => {
-                console.log(error);
-                return reject(error)
-            });
-    }).then( (data) => {
-        return csv().fromString(data)
-            .then((json)=>{
-                let nrCases = json[json.length-1][local === "Lisbon" ? "LISBOA" : local.toUpperCase()]
-                if(nrCases === undefined){
-                    return conv.ask("That Local doesn't exist or it was misspelled. Can you repeat please?")
-                }
-                return conv.ask("There are "+Math.floor(nrCases)+" cases in "+local)
-            })
-    })
-    //return conv.ask("You said "+ local);
+    let nrCases = locals[local === "Lisbon" ? "LISBOA" : local.toUpperCase()]
+    if(nrCases === undefined){
+        return conv.ask("That Local doesn't exist or it was misspelled. Can you repeat please?")
+    }
+    return conv.ask("There are "+Math.floor(nrCases)+" cases in "+local)
 });
 /*
 app.intent('CasesLocation', (conv)=>{
