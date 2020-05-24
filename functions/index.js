@@ -3,7 +3,7 @@
 const https = require('https');
 const fetch = require("node-fetch");
 const csv=require('csvtojson')
-const {dialogflow} = require('actions-on-google');
+const {dialogflow, Permission, SimpleResponse} = require('actions-on-google');
 const functions = require('firebase-functions');
 const app = dialogflow({debug: true});
 const admin = require('firebase-admin');
@@ -18,38 +18,42 @@ var locals;
 admin.initializeApp();
 const db = admin.firestore();
 
-var requestLocals =  new Promise( (resolve, reject) => {
-    fetch('https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv')
-        .then(response => response.text())
-        .then(data => {
-            return csv().fromString(data)
-                .then((json)=>{
-                    json = json[json.length-1]
-                    console.log("JSON"+json)
-                    return resolve(json)
-                })
-        })
-        .catch(error => {
-            return reject(error)
-        });
-})
+function requestLocals(){
+    return new Promise( (resolve, reject) => {
+        fetch('https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv')
+            .then(response => response.text())
+            .then(data => {
+                return csv().fromString(data)
+                    .then((json)=>{
+                        json = json[json.length-1]
+                        return resolve(json)
+                    })
+            })
+            .catch(error => {
+                return reject(error)
+            });
+    })
+}
 
-var requestCases = new Promise( (resolve, reject) => {
-    fetch('https://covid19-api.vost.pt/Requests/get_last_update')
-        .then(response => response.json())
-        .then(data => {
-            return resolve(data);
-        })
-        .catch(error => {
-            console.log(error);
-            return reject(error)
-        });
-});
+
+function requestCases() {
+    return new Promise((resolve, reject) => {
+        fetch('https://covid19-api.vost.pt/Requests/get_last_update')
+            .then(response => response.json())
+            .then(data => {
+                return resolve(data);
+            })
+            .catch(error => {
+                console.log(error);
+                return reject(error)
+            });
+    });
+}
 
 function synchronizeFrom(data){
     let correctData = data.split('-')
 
-    var lastSyncDate = new Date(correctData[2], correctData[1]-1, correctData[0], 15);
+    var lastSyncDate = new Date(correctData[2], correctData[1]-1, correctData[0], 16);
 
     var nextSyncDate = new Date(lastSyncDate)
     nextSyncDate.setDate(nextSyncDate.getDate() + 1)
@@ -112,7 +116,6 @@ app.intent('Default Welcome Intent', (conv) => {
     //return conv.ask("Welcome, i can inform you about the current COVID 19 situation in Portugal. What would you like to know?");
 
     return getFromDB.then( (res)=>{
-        console.log("RES:"+res.data.cases)
         cases = res.data.cases;
         locals = res.data.locals
         return conv.ask("Welcome, i can inform you about the current COVID 19 situation in Portugal. What would you like to know?");
@@ -140,9 +143,42 @@ app.intent('RecoveredCases', conv => {
 app.intent('LocalCases', (conv, {local}) => {
     let nrCases = locals[local === "Lisbon" ? "LISBOA" : local.toUpperCase()]
     if(nrCases === undefined){
-        return conv.ask("That Local doesn't exist or it was misspelled. Can you repeat please?")
+        return conv.ask(`That Local doesn't have cases or it was misspelled (${local}). Can you repeat please?`)
     }
     return conv.ask("There are "+Math.floor(nrCases)+" cases in "+local)
+});
+
+app.intent("CasesByUserLocation", conv => {
+    conv.data.requestedPermission = "DEVICE_COARSE_LOCATION";
+    return conv.ask(
+        new Permission({
+            context: "To locate your city/region",
+            permissions: conv.data.requestedPermission
+        })
+    );
+});
+
+
+app.intent("GetLocation", (conv, params, permissionGranted) => {
+    if (permissionGranted) {
+        const { requestedPermission } = conv.data;
+        let city;
+        if (requestedPermission === "DEVICE_COARSE_LOCATION") {
+            const { location } = conv.device;
+            city = location.city
+            if (city) {
+                let nrCases = locals[city === "Lisbon" ? "LISBOA" : city.toUpperCase()]
+                if(nrCases === undefined){
+                    return conv.ask(`That Local doesn't seem to have cases.`)
+                }
+                return conv.ask("There are "+Math.floor(nrCases)+" cases in "+city)
+            }
+
+            return conv.ask("Sorry, I could not figure out where you are.");
+        }
+    } else {
+        return conv.ask("Sorry, permission denied.");
+    }
 });
 /*
 app.intent('CasesLocation', (conv)=>{
