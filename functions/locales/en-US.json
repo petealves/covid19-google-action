@@ -1,0 +1,18 @@
+{
+  "convCloseError" : "Oops. Sorry, something went wrong.",
+  "welcome": "Welcome, i can inform you about the current COVID 19 situation in Portugal. What would you like to know?",
+  "askMore" : "What would you like to know more?",
+  "errorFetchData" : "Sorry, an error occurred fetching the data.",
+  "casesDeaths" : "There are already {deaths} fatalities in Portugal.",
+  "casesHospital" : "There are {internados} casual hospitalized persons and {internados_uci} persons in ICU beds in Portugal.",
+  "casesNew" : "Today there are {confirmados_novos} new cases with a total of {confirmados} cases in Portugal.",
+  "casosRecovered" : "There are {recuperados} patients recovered in Portugal.",
+  "casosLocalError" : "That Local doesn't have cases or it was misspelled ({local}). Can you repeat or make another question please?",
+  "casosLocal" : "There are {casos_local} cases in {local}.",
+  "contextPermission" : "To locate your city/region",
+  "casesLocalDeviceNull" : "That Local doesn't seem to have cases.",
+  "casosLocalDeviceErrorLocalize" : "Sorry, I could not figure out where you are.",
+  "casosLocalDevice" : "There are {casos_local} cases in {local}.",
+  "permissionDenied" : "Sorry, permission denied.",
+  "close" : "Goodbye, until next time."
+}

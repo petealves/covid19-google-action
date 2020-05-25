@@ -1,0 +1,18 @@
+{
+  "convCloseError" : "Oops. Desculpe, algo de errado aconteceu.",
+  "welcome": "Posso informá-lo sobre a situação atual do COVID-19 em Portugal. O que gostaría de saber?",
+  "askMore" : "O que quer saber mais?",
+  "errorFetchData" : "Infelizmente ocorreu um erro ao obter os dados.",
+  "casesDeaths" : "Existem já {deaths} mortes a lamentar em Portugal.",
+  "casesHospital" : "Existem atualmente {internados} internados e {internados_uci} internados em Cuidados Intensivos em Portugal.",
+  "casesNew" : "Hoje existem {confirmados_novos} novos casos, contando com um total de {confirmados} casos.",
+  "casesRecovered" : "Existem atualmente {recuperados} cidadãos recuperados.",
+  "casesLocalError" : "O local que disse não tem casos ou foi mal interpretado ({local}). Repita ou faça outra questão.",
+  "casesLocal" : "Existem {casos_local} casos em {local}.",
+  "contextPermission" : "Para localizar a sua cidade/região",
+  "casesLocalDeviceNull" : "O seu local parece não ter casos.",
+  "casesLocalDeviceErrorLocalize" : "Pedimos desculpa, mas não foi possível localizar o seu dispositivo.",
+  "casesLocalDevice" : "Existem {casos_local} casos em {local}.",
+  "permissionDenied" : "Não aceitou a permissão para obter a sua localização.",
+  "close" : "Adeus, até à próxima."
+}
