@@ -1,7 +1,7 @@
 'use strict';
 const fetch = require("node-fetch");
 const csv=require('csvtojson')
-const {dialogflow, Permission, SimpleResponse} = require('actions-on-google');
+const {dialogflow, Permission, SimpleResponse, Suggestions} = require('actions-on-google');
 const functions = require('firebase-functions');
 const app = dialogflow({debug: true});
 const admin = require('firebase-admin');
@@ -14,6 +14,15 @@ const db = admin.firestore();
 
 let languageFile;
 
+function setLocalFile(locale){
+    if(locale === "en"){
+        let data = fs.readFileSync('./locales/en-US.json')
+        languageFile= JSON.parse(data);
+    }else if(locale === "pt"){
+        let data = fs.readFileSync('./locales/pt-BR.json')
+        languageFile= JSON.parse(data);
+    }
+}
 
 function synchronizeFrom(data){
     let correctData = data.split('-')
@@ -104,64 +113,86 @@ function parseResponseFromFile(key, variables){
     return response;
 }
 
+function displaySuggestions(conv, lang){
+    if(lang === "en"){
+        return conv.ask(new Suggestions(['New Cases', 'Recovered Persons', 'Cases in a City', 'Cases in my City', 'Hospitalized Persons', 'Total Deaths']));
+    }
+    return conv.ask(new Suggestions(['Casos Novos', 'Pacientes Recuperados', 'Casos numa Cidade', 'Casos na minha Cidade', 'Pacientes Internados', 'Mortos']));
+
+}
+
 app.catch((conv, e) => {
     console.log("ERROR "+e);
     conv.close(parseResponseFromFile("convCloseError"));
 });
 
 app.intent('Default Welcome Intent', (conv) => {
-
-    if(conv.user.locale.split("-")[0] === "en"){
-        let data = fs.readFileSync('./locales/en-US.json')
-        languageFile= JSON.parse(data);
-    }else if(conv.user.locale.split("-")[0] === "pt"){
-        let data = fs.readFileSync('./locales/pt-BR.json')
-        languageFile= JSON.parse(data);
-    }else {
-        return conv.close("Language "+ conv.user.locale +" not supported.")
-    }
-
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
     return getFromDB.then( (res)=>{
         console.log("Sixth data ready")
         cases = res.data.cases;
         locals = res.data.locals
 
-        return conv.ask(new SimpleResponse(parseResponseFromFile("welcome")));
+        conv.ask(new SimpleResponse(parseResponseFromFile("welcome")));
+        return displaySuggestions(conv,locale)
     }, (error) => {
         console.log("ERROR WELCOME INTENT:"+error)
         conv.close(new SimpleResponse(parseResponseFromFile("errorFetchData")));
     });
 });
 app.intent('DeathCases', conv => {
+    /*Every intent needs to set the localeFile because of explicit Invocations.
+    For example, if user says "Talk to  Context Project and tell me today's cases",
+    The agent will automatically return the newCases intent without going to the welcome intent. */
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
     conv.ask(new SimpleResponse(parseResponseFromFile("casesDeaths", {deaths: cases.obitos})));
-    return conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    return displaySuggestions(conv,locale)
 });
 
 app.intent('HospitalizedCases', conv => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
     conv.ask(new SimpleResponse(parseResponseFromFile("casesHospital", {internados: cases.internados, internados_uci: cases.internados_uci})));
-    return conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    return displaySuggestions(conv,locale)
 });
 
 app.intent('NewCases', conv => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
     conv.ask(new SimpleResponse(parseResponseFromFile("casesNew", {confirmados_novos: cases.confirmados_novos, confirmados: cases.confirmados})));
-    return conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    return displaySuggestions(conv,locale)
 });
 
 app.intent('RecoveredCases', conv => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
+    console.log("RECUP"+cases.recuperados)
     conv.ask(new SimpleResponse(parseResponseFromFile("casesRecovered", {recuperados: cases.recuperados})));
-    return conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    return displaySuggestions(conv,locale)
 });
 
 app.intent('LocalCases', (conv, {local}) => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
     let nrCases = locals[local === "Lisbon" ? "LISBOA" : local.toUpperCase()]
     if(nrCases === undefined){
-        return conv.ask(new SimpleResponse(parseResponseFromFile("casesLocalError", {local: local})))
+        conv.ask(new SimpleResponse(parseResponseFromFile("casesLocalError", {local: local})))
+        return displaySuggestions(conv,locale)
     }
     conv.ask(new SimpleResponse(parseResponseFromFile("casesLocal", {casos_local: Math.floor(nrCases), local: local})))
-    return conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    return displaySuggestions(conv,locale)
 });
 
 app.intent("CasesByUserLocation", conv => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
     conv.data.requestedPermission = "DEVICE_COARSE_LOCATION";
     return conv.ask(
         new Permission({
@@ -173,6 +204,8 @@ app.intent("CasesByUserLocation", conv => {
 
 
 app.intent("GetLocation", (conv, params, permissionGranted) => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
     if (permissionGranted) {
         const { requestedPermission } = conv.data;
         let city;
@@ -182,18 +215,43 @@ app.intent("GetLocation", (conv, params, permissionGranted) => {
             if (city) {
                 let nrCases = locals[city === "Lisbon" ? "LISBOA" : city.toUpperCase()]
                 if(nrCases === undefined){
-                    return conv.ask(new SimpleResponse(parseResponseFromFile("casesLocalDeviceNull")))
+                    conv.ask(new SimpleResponse(parseResponseFromFile("casesLocalDeviceNull")))
+                    return displaySuggestions(conv,locale)
                 }
                 conv.ask(new SimpleResponse(parseResponseFromFile("casesLocal", {casos_local: Math.floor(nrCases), local: city})))
-                return conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+                conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+                return displaySuggestions(conv,locale)
             }
 
-            return conv.ask(new SimpleResponse(parseResponseFromFile("casosLocalDeviceErrorLocalize")));
+            conv.ask(new SimpleResponse(parseResponseFromFile("casosLocalDeviceErrorLocalize")));
+            return displaySuggestions(conv,locale)
         }
     } else {
-        return conv.ask(new SimpleResponse(parseResponseFromFile("permissionDenied")));
+        conv.ask(new SimpleResponse(parseResponseFromFile("permissionDenied")));
+        return displaySuggestions(conv,locale)
     }
 });
+
+app.intent("CasesCitySuggestion", conv => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
+    return conv.ask(new SimpleResponse(parseResponseFromFile("whatCity")))
+})
+app.intent("CasesCitySuggestion-final", (conv, option) => {
+    let locale = conv.user.locale.split("-")[0]
+    setLocalFile(locale)
+    conv.contexts.get("CasesCitySuggestion-followup")
+
+    let local = option.local
+    let nrCases = locals[local === "Lisbon" ? "LISBOA" : local.toUpperCase()]
+    if(nrCases === undefined){
+        conv.ask(new SimpleResponse(parseResponseFromFile("casesLocalError", {local: local})))
+        return displaySuggestions(conv,locale)
+    }
+    conv.ask(new SimpleResponse(parseResponseFromFile("casesLocal", {casos_local: Math.floor(nrCases), local: local})))
+    conv.ask(new SimpleResponse(parseResponseFromFile("askMore")));
+    return displaySuggestions(conv,locale)
+})
 
 
 app.intent("Close", conv => {

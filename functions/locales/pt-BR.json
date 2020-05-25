@@ -14,5 +14,6 @@
   "casesLocalDeviceErrorLocalize" : "Pedimos desculpa, mas não foi possível localizar o seu dispositivo.",
   "casesLocalDevice" : "Existem {casos_local} casos em {local}.",
   "permissionDenied" : "Não aceitou a permissão para obter a sua localização.",
+  "whatCity" : "Qual é a cidade?",
   "close" : "Adeus, até à próxima."
 }
