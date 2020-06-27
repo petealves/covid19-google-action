@@ -6,7 +6,8 @@ const csv=require('csvtojson')
 module.exports ={
     getFromAPI(db){
     return new Promise((resolve, reject) => {
-        fetch('https://covid19-api.vost.pt/Requests/get_last_update')
+        //fetch('https://covid19-api.vost.pt/Requests/get_last_update')
+        fetch('https://covid19-api.vost.pt/Requests/get_full_dataset')
             .then(response => response.json())
             .then(dataCases => {
                 return db.collection('Covid-Portugal')
@@ -23,7 +24,7 @@ module.exports ={
                                             .doc("Locals")
                                             .set(locals)
                                             .then(()=>{
-                                                return resolve ({data:{cases: dataCases, locals: locals}})
+                                                return resolve ({data:{data: dataCases, locals: locals}})
                                             })
                                     })
                             })

@@ -3,10 +3,13 @@
   "welcome": "Posso informá-lo sobre a situação atual do COVID-19 em Portugal. O que gostaría de saber?",
   "askMore" : "O que quer saber mais?",
   "errorFetchData" : "Infelizmente ocorreu um erro ao obter os dados.",
-  "casesDeaths" : "Existem já {deaths} mortes a lamentar em Portugal.",
+  "casesDeaths" : "Hoje existem {deaths_today} mortes a lamentar em Portugal, sendo que o total ontem era {deaths_yesterday}.",
+  "casesDeathsEqual" : "There are already {deaths} fatalities in Portugal, the same as yesterday.",
   "casesHospital" : "Existem atualmente {internados} internados e {internados_uci} internados em Cuidados Intensivos em Portugal.",
+  "casesHospitalDiff" : "Existem atualmente {internados} internados ({internados_today} {internados_measure} que ontem) e {internados_uci} internados em Cuidados Intensivos ({icu_today} {icu_measure} que ontem).",
   "casesNew" : "Hoje existem {confirmados_novos} novos casos, contando com um total de {confirmados} casos.",
-  "casesRecovered" : "Existem atualmente {recuperados} cidadãos recuperados.",
+  "casesRecoveredEqual" : "Existem já {recuperados} pacientes recuperados em Portugal, o mesmo que ontem.",
+  "casesRecovered" : "Existem já {recuperados} pacientes recuperados em Portugal, {recuperados_hoje} mais que ontem.",
   "casesLocalError" : "O local que disse não tem casos ou foi mal interpretado ({local}). Repita ou faça outra questão.",
   "casesLocal" : "Existem {casos_local} casos em {local}.",
   "contextPermission" : "Para localizar a sua cidade/região",
@@ -24,5 +27,9 @@
   "casesMadeira" : "Existem {madeira} casos confirmados na Madeira.",
   "permissionDenied" : "Não aceitou a permissão para obter a sua localização.",
   "whatCity" : "Qual é a cidade?",
-  "close" : "Adeus, até à próxima."
+  "close" : "Adeus, até à próxima.",
+  "measureLess": "menos",
+  "measureMore": "mais",
+  "testsPercentage": "Foram feitos {testes_hoje} testes nas ultimas 24 horas e {testes_ontem} no dia anterior, com {percent_positivo_hoje}% e {percent_positivo_ontem}% resultados positivos, respetivamente.",
+  "testsSex": "There are {casos_m} masculine cases and {casos_f} feminine cases."
 }

@@ -5,13 +5,16 @@ module.exports ={
     synchronizeFrom(data){
         let correctData = data.split('-')
 
-        var lastSyncDate = new Date(correctData[2], correctData[1]-1, correctData[0], 16);
+        var lastSyncDate = new Date(correctData[2], correctData[1]-1, correctData[0], 14, 30);
 
+        //We need to create a new date from lastSyncDate other than user "=" because if we use "=" it would keep the reference to lastSyncDate thus updating it also.
         var nextSyncDate = new Date(lastSyncDate)
-        nextSyncDate.setDate(nextSyncDate.getDate() + 1)
+        nextSyncDate.setDate(lastSyncDate.getDate() + 1)
 
         var currentDate = new Date()
-
+        console.log(lastSyncDate.toString());
+        console.log(nextSyncDate.toString());
+        console.log(currentDate >= nextSyncDate)
         if(currentDate >= nextSyncDate){
             return "API"
         }else{
