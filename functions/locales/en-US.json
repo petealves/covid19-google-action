@@ -1,7 +1,9 @@
 {
   "convCloseError" : "Oops. Sorry, something went wrong.",
   "welcome": "Welcome, i can inform you about the current COVID 19 situation in Portugal. What would you like to know?",
-  "askMore" : "What would you like to know more?",
+  "askMore1" : "What would you like to know more?",
+  "askMore2" : "Is there anything else you would like to know?",
+  "askMore3" : "Anything else?",
   "errorFetchData" : "Sorry, an error occurred fetching the data.",
   "casesDeaths" : "Today there were {deaths_today} fatalities more than yesterday, where the total yesterday was {deaths_yesterday}",
   "casesDeathsEqual" : "There are already {deaths} fatalities in Portugal, the same as yesterday.",
@@ -31,5 +33,14 @@
   "measureLess": "less",
   "measureMore": "more",
   "testsPercentage": "There were made {testes_hoje} tests in the last 24 hours and {testes_ontem} in the day before, with {percent_positivo_hoje}% and {percent_positivo_ontem}% positive results respectively.",
-  "testsSex": "There are {casos_m} masculine cases and {casos_f} feminine cases."
+  "testsSex": "There are {casos_m} masculine cases and {casos_f} feminine cases.",
+  "lastUpdateData": "The last known update for this data from the API and DGS is {date}.",
+  "north": "North",
+  "center": "Center",
+  "lvt": "Lisbon and Tagus Valley",
+  "alentejo": "Alentejo",
+  "algarve": "Algarve",
+  "acores": "Azores",
+  "madeira": "Madeira",
+  "casesRegion": "These are the cases by region: \n{casesRegion}"
 }

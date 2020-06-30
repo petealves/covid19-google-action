@@ -54,12 +54,6 @@ Select **Export and Import** tab.
  - How many hospitalized persons;
  - How many suspect cases exist;
  - How many cases wait for laboratory results;
- - Cases in a region: 
-	 - North region;
-	 - Center region;
-	 - Lisbon and Tagus Valley region;
-	 - Alentejo's region;
-	 - Algarve region;
-	 - Azores region;
-	 - Madeira region;
-- How many cases by sex exist;
+ - Cases in regions;
+ - Last date of update;
+ - How many cases by sex exist;

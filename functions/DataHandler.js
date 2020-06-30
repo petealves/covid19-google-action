@@ -4,6 +4,7 @@ const csv=require('csvtojson')
 
 
 module.exports ={
+  /*
     getFromAPI(db){
     return new Promise((resolve, reject) => {
         //fetch('https://covid19-api.vost.pt/Requests/get_last_update')
@@ -42,6 +43,21 @@ module.exports ={
             });
     });
 
-}
-
+},
+*/
+  async getFromAPI(db){
+      try{
+          let response = await fetch('https://covid19-api.vost.pt/Requests/get_full_dataset')
+          let dataCases = await response.json()
+          await db.collection('Covid-Portugal').doc("Cases").set(dataCases)
+          let responseLocals = await fetch('https://raw.githubusercontent.com/dssg-pt/covid19pt-data/master/data_concelhos.csv')
+          let dataLocals = await responseLocals.text()
+          let json = await csv().fromString(dataLocals)
+          locals = json[json.length-1]
+          await db.collection("Covid-Portugal").doc("Locals").set(locals)
+          return ({data:{data: dataCases, locals: locals}})
+      }catch (error) {
+          return error
+      }
+    }
 }
